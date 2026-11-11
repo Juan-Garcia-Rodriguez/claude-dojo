@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dojo Claude Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bangers&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECE6F4; --surface:#FFFFFF; --surface-2:#F4F0FA; --ink:#1E1433; --muted:#5E5378;
+  --line:#D6CCE6; --accent:#6A25E0; --accent-ink:#FFFFFF; --ok:#2B8A3E; --warn:#C2410C; --chip:#EAE2F6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#130D22; --surface:#1C1530; --surface-2:#251C3E; --ink:#EEE8FA; --muted:#A99CC6;
+    --line:#352A55; --accent:#B58CFF; --accent-ink:#130D22; --ok:#69DB7C; --warn:#FF9F5A; --chip:#2C2248;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#130D22; --surface:#1C1530; --surface-2:#251C3E; --ink:#EEE8FA; --muted:#A99CC6;
+  --line:#352A55; --accent:#B58CFF; --accent-ink:#130D22; --ok:#69DB7C; --warn:#FF9F5A; --chip:#2C2248;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;gap:12px;padding:8px 14px;flex:none;flex-wrap:wrap}
+h1{font-family:"Bangers","Impact",sans-serif;font-weight:400;font-size:30px;line-height:1;margin:0;letter-spacing:1.5px}
+.pulse{color:var(--muted);font-size:14px;flex:1;min-width:0}
+.pulse b{color:var(--ink)}
+.btn{border:0;border-radius:4px;padding:7px 12px;background:var(--chip);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);font-weight:700}
+
+.stage{position:relative;flex:1;min-height:0;background:linear-gradient(180deg,#22123C 0%,#4A1F4E 65%,#7A3348 100%);overflow:hidden}
+.stage canvas{position:absolute;image-rendering:pixelated;image-rendering:crisp-edges}
+.banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,88%);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:16px 18px;text-align:left}
+.banner h2{font-family:"Pixelify Sans","Courier New",monospace;font-weight:600;font-size:18px;margin:0 0 6px}
+.banner p{margin:0 0 10px;color:var(--muted)}
+.banner p:last-child{margin-bottom:0}
+.banner code{background:var(--chip);padding:1px 5px;border-radius:3px;color:var(--ink)}
+.toast{position:absolute;left:12px;bottom:12px;display:flex;flex-direction:column;gap:6px;max-width:min(420px,80%);pointer-events:none}
+.toast div{background:rgba(20,12,34,.82);color:#F3EDFF;font-size:13px;padding:5px 10px;border-radius:4px;border-left:3px solid var(--c,#B58CFF)}
+
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(370px,92%);background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .2s ease;z-index:5}
+.drawer.open{transform:none}
+@media (prefers-reduced-motion:reduce){.drawer{transition:none}}
+.drawer-head{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.drawer-head .tabs{display:flex;gap:4px;flex:1}
+.tabs button{border:0;background:none;padding:5px 10px;border-radius:4px;cursor:pointer;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--chip);color:var(--ink);font-weight:700}
+.drawer-body{overflow:auto;padding:12px;flex:1}
+.list{list-style:none;margin:0;padding:0}
+.list li button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:7px 6px;border-radius:4px;cursor:pointer}
+.list li button:hover{background:var(--surface-2)}
+.list li.sub button{padding-left:24px}
+.dot{width:10px;height:10px;border-radius:2px;flex:none;margin-top:6px}
+.li-main{min-width:0;flex:1}
+.li-title{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-sub{display:block;font-size:13px;color:var(--muted)}
+.status{font-size:12px;padding:1px 7px;border-radius:10px;background:var(--chip);white-space:nowrap;margin-top:2px}
+.status.working{color:var(--accent)} .status.idle{color:var(--muted)}
+.proj{font-weight:700;font-size:14px;padding:8px 6px 2px}
+.proj:first-child{padding-top:0}
+.empty{color:var(--muted);font-size:14px;padding:6px}
+.feed li{font-size:14px;padding:6px 4px;border-bottom:1px solid var(--line);display:flex;gap:8px}
+.feed time{color:var(--muted);font-size:12px;white-space:nowrap;margin-top:2px}
+.who{display:flex;gap:12px;align-items:center;margin-bottom:8px}
+.avatar{width:52px;height:52px;image-rendering:pixelated;background:var(--surface-2);border-radius:4px;flex:none}
+.who h2{margin:0;font-family:"Pixelify Sans","Courier New",monospace;font-weight:600;font-size:20px}
+.who p{margin:0;color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chips span{font-size:13px;background:var(--chip);padding:2px 8px;border-radius:10px}
+.box{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+.box h3{font-size:14px;margin:0 0 4px;color:var(--muted);font-weight:400}
+.quote{margin:0 0 8px;font-weight:700}
+.muted{color:var(--muted);font-size:14px;margin:0}
+.box ul{margin:0;padding-left:18px}
+.back{margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Dojo Claude Code</h1>
+    <div class="pulse" id="pulse" aria-live="polite">Connexion…</div>
+    <button class="btn" id="openTeam">Agents</button>
+    <button class="btn" id="openFeed">Journal</button>
+  </header>
+  <main class="stage" id="stage">
+    <canvas id="cv" role="img" aria-label="Dojo en pixel art. Chaque projet Claude Code a son tapis. Le chef s’assoit au fond, ses sous-agents devant lui. Le bouton Agents liste tout le monde au clavier."></canvas>
+    <div class="banner" id="banner" hidden></div>
+    <div class="toast" id="toast" aria-hidden="true"></div>
+    <aside class="drawer" id="drawer" aria-label="Panneau du dojo">
+      <div class="drawer-head">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tab-team" aria-selected="true">Agents</button>
+          <button role="tab" id="tab-feed" aria-selected="false">Journal</button>
+        </div>
+        <button class="btn" id="closeDrawer" aria-label="Fermer le panneau">Fermer</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+// ---------- Constantes ----------
+const TW=32, TH=16, WALL=56, MAT=6, GAP=1, H=17, DOOR_Y=8.5, MAXCOL=4;
+const SKINS = ["#F2C9A0","#E0AC7E","#C68B5E","#9C6B44","#6E4A2F","#F6D7B8"];
+const HAIRS = ["#2B1D14","#5A3A22","#C9A15A","#8B2E1F","#1A1A1A","#6B6B78","#3D2A5A"];
+const CLAN_COLORS = ["#F0C419","#FF7AA8","#5BE7C4","#FF9F43","#9C88FF","#54A0FF","#FF6B6B","#7BD389"];
+const LEVELS = [
+  {name:"Base", hint:"Haiku"},
+  {name:"Éveil", hint:"Sonnet"},
+  {name:"Éveil II", hint:"Opus"},
+  {name:"Ultime", hint:"Mythos ou Fable"},
+];
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const hash = str => { let h=0; for(const ch of String(str)) h=(h*31+ch.charCodeAt(0))|0; return Math.abs(h) };
+const clanColor = name => CLAN_COLORS[hash(name) % CLAN_COLORS.length];
+function levelFromModel(m){
+  m = String(m||"").toLowerCase();
+  if(/mythos|fable/.test(m)) return 3;
+  if(/opus/.test(m)) return 2;
+  if(/haiku/.test(m)) return 0;
+  return 1;
+}
+function shade(hex, amt){
+  const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const f=v=>Math.max(0,Math.min(255,Math.round(amt<0?v*(1+amt):v+(255-v)*amt)));
+  return "#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+
+// ---------- Salle (taille selon le nombre de projets) ----------
+let COLS = 1, W = 1 + MAT + GAP, OX = 0, OY = 0, SW = 0, SH = 0;
+const iso = (x,y,z=0) => [OX+(x-y)*TW/2, OY+(x+y)*TH/2 - z];
+const slotOrigin = i => [1 + Math.floor(i/2)*(MAT+GAP), i%2===0 ? 1 : 10];
+const chefSeat = i => { const [x0,y0]=slotOrigin(i); return {x:x0+1.5, y:y0+1.5} };
+const DISCIPLE_SPOTS = [[3.7,2.1],[2.9,2.9],[4.5,1.3],[2.1,3.7],[4.8,2.6],[4.0,3.4],[5.4,1.8],[3.2,4.2]];
+const discipleSeat = (i,k) => { const [x0,y0]=slotOrigin(i), [a,b]=DISCIPLE_SPOTS[k]; return {x:x0+a, y:y0+b} };
+
+const cv = $("cv"), ctx = cv.getContext("2d");
+const bg = document.createElement("canvas"), bctx = bg.getContext("2d");
+
+function setRoom(cols){
+  COLS = cols; W = 1 + cols*(MAT+GAP);
+  const left = -H*TW/2, right = W*TW/2, top = -WALL-14, bottom = (W+H)*TH/2 + 8;
+  OX = Math.round(-left) + 8; OY = Math.round(-top);
+  SW = Math.round(right-left) + 16; SH = Math.round(bottom-top);
+  cv.width = bg.width = SW; cv.height = bg.height = SH;
+  ctx.imageSmoothingEnabled = false;
+  drawBackground(); fit();
+}
+function fit(){
+  const st = $("stage"), cw = st.clientWidth, ch = st.clientHeight;
+  const sc = Math.max(0.5, Math.min(cw/SW, ch/SH));
+  const w = Math.floor(SW*sc), h = Math.floor(SH*sc);
+  cv.style.width = w+"px"; cv.style.height = h+"px";
+  cv.style.left = Math.floor((cw-w)/2)+"px"; cv.style.top = Math.floor((ch-h)/2)+"px";
+}
+new ResizeObserver(fit).observe($("stage"));
+
+// ---------- Dessin ----------
+function poly(c,pts,fill){ c.beginPath(); c.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) c.lineTo(pts[i][0],pts[i][1]); c.closePath(); c.fillStyle=fill; c.fill() }
+function quad(c,x,y,w,d,fill,z=0){ poly(c,[iso(x,y,z),iso(x+w,y,z),iso(x+w,y+d,z),iso(x,y+d,z)],fill) }
+function isoBox(c,x,y,z,w,d,h,top,fl,fr){
+  poly(c,[iso(x,y+d,z),iso(x+w,y+d,z),iso(x+w,y+d,z+h),iso(x,y+d,z+h)],fl);
+  poly(c,[iso(x+w,y,z),iso(x+w,y+d,z),iso(x+w,y+d,z+h),iso(x+w,y,z+h)],fr);
+  poly(c,[iso(x,y,z+h),iso(x+w,y,z+h),iso(x+w,y+d,z+h),iso(x,y+d,z+h)],top);
+}
+const R = (c,x,y,w,h,col) => { c.fillStyle=col; c.fillRect(Math.round(x),Math.round(y),w,h) };
+
+function drawBackground(){
+  const c = bctx; c.clearRect(0,0,SW,SH);
+  poly(c,[iso(0,0),iso(0,H),iso(0,H,WALL),iso(0,0,WALL)],"#7A4B32");
+  poly(c,[iso(0,0),iso(W,0),iso(W,0,WALL),iso(0,0,WALL)],"#8F5A3C");
+  for(let y=0;y<=H;y+=2.5) poly(c,[iso(0,y),iso(0,y+0.25),iso(0,y+0.25,WALL),iso(0,y,WALL)],"#5C3522");
+  for(let x=0;x<=W;x+=3.5) poly(c,[iso(x,0),iso(x+0.25,0),iso(x+0.25,0,WALL),iso(x,0,WALL)],"#6A3D27");
+  poly(c,[iso(0,0,WALL),iso(0,H,WALL),iso(-0.3,H,WALL),iso(-0.3,-0.3,WALL),iso(W,-0.3,WALL),iso(W,0,WALL)],"#3A1F14");
+  poly(c,[iso(0,0,WALL-8),iso(W,0,WALL-8),iso(W,0,WALL-4),iso(0,0,WALL-4)],"#4A2A1A");
+  poly(c,[iso(0,0,WALL-8),iso(0,H,WALL-8),iso(0,H,WALL-4),iso(0,0,WALL-4)],"#40241A");
+  for(let x=1.4;x<=W-2.6;x+=3.5){
+    poly(c,[iso(x,0,12),iso(x+2.4,0,12),iso(x+2.4,0,44),iso(x,0,44)],"#F3E9D2");
+    for(let k=1;k<4;k++) poly(c,[iso(x,0,12+k*8),iso(x+2.4,0,12+k*8),iso(x+2.4,0,13+k*8),iso(x,0,13+k*8)],"#9C7656");
+    poly(c,[iso(x+1.15,0,12),iso(x+1.25,0,12),iso(x+1.25,0,44),iso(x+1.15,0,44)],"#9C7656");
+  }
+  [[2.4,"#2A1846"],[4.8,"#7A1F2B"],[12,"#2A1846"],[14.4,"#7A1F2B"]].forEach(([y,col])=>{
+    poly(c,[iso(0,y,14),iso(0,y+1.1,14),iso(0,y+1.1,44),iso(0,y,44)],"#EFE3C4");
+    poly(c,[iso(0,y+0.25,20),iso(0,y+0.85,20),iso(0,y+0.85,38),iso(0,y+0.25,38)],col);
+    poly(c,[iso(0,y-0.1,44),iso(0,y+1.2,44),iso(0,y+1.2,46),iso(0,y-0.1,46)],"#3A1F14");
+  });
+  poly(c,[iso(0,DOOR_Y-1,0),iso(0,DOOR_Y+1,0),iso(0,DOOR_Y+1,38),iso(0,DOOR_Y-1,38)],"#1B0F22");
+  poly(c,[iso(0,DOOR_Y+1,0),iso(0,DOOR_Y+2,0),iso(0,DOOR_Y+2,38),iso(0,DOOR_Y+1,38)],"#F3E9D2");
+  poly(c,[iso(0,DOOR_Y-1.1,38),iso(0,DOOR_Y+2.1,38),iso(0,DOOR_Y+2.1,42),iso(0,DOOR_Y-1.1,42)],"#3A1F14");
+  c.font="8px 'Pixelify Sans', monospace"; c.fillStyle="#FFE7A8"; c.textAlign="center";
+  const [dx,dy] = iso(0,DOOR_Y,46); c.fillText("ENTRÉE", dx, dy);
+  for(let x=0;x<W;x++) for(let y=0;y<H;y++){
+    if(y>=7 && y<10){ quad(c,x,y,1,1,(y%2)?"#A0683F":"#93603A"); continue }
+    quad(c,x,y,1,1,((Math.floor(x/2)+y)%2)?"#CBC48E":"#C2BB84");
+  }
+  for(let y=0;y<=H;y++){ if(y>7&&y<10) continue; poly(c,[iso(0,y),iso(W,y),iso(W,y+0.04),iso(0,y+0.04)],"#8F8A55") }
+  for(let x=0;x<=W;x+=2){ poly(c,[iso(x,0),iso(x+0.06,0),iso(x+0.06,7),iso(x,7)],"#6E6A3E"); poly(c,[iso(x,10),iso(x+0.06,10),iso(x+0.06,H),iso(x,H)],"#6E6A3E") }
+}
+
+function drawAura(sx, sy, level, color, t, back){
+  if(!level) return;
+  const hgt=[0,28,38,50][level], maxW=[0,9,12,15][level], base=sy+1;
+  ctx.save();
+  if(back){
+    ctx.globalAlpha = level===1 ? 0.5+Math.sin(t*4)*0.1 : 0.62;
+    for(let i=0;i<hgt;i++){ const k=i/hgt, w=Math.max(1,Math.round(maxW*Math.pow(1-k,0.55)+Math.sin(t*13+i*0.8)*(level>1?1.6:0.8))); R(ctx,sx-w,base-i,w*2,1,color) }
+    if(level>=2){ ctx.globalAlpha=0.55; for(let i=0;i<hgt*0.75;i++){ const k=i/(hgt*0.75), w=Math.max(1,Math.round((maxW-4)*Math.pow(1-k,0.6)+Math.sin(t*15+i))); R(ctx,sx-w,base-i,w*2,1,shade(color,0.7)) } }
+    if(level===3){
+      ctx.globalAlpha=0.7; for(let i=0;i<hgt*0.5;i++){ const w=Math.max(1,Math.round(4*Math.pow(1-i/(hgt*0.5),0.6))); R(ctx,sx-w,base-i,w*2,1,"#FFFFFF") }
+      ctx.globalAlpha=0.8; const a=t*3; for(let k=0;k<8;k++){ const ang=a+k*Math.PI/4; R(ctx,sx+Math.cos(ang)*15,base-4+Math.sin(ang)*5,2,1,shade(color,0.5)) }
+    }
+  } else if(level>=2){
+    ctx.globalAlpha=0.9; const n=level===3?8:4;
+    for(let k=0;k<n;k++){ const ph=(t*(0.8+k*0.13)+k*0.37)%1, px=sx+Math.sin(k*2.3+t*2)*(maxW+2); R(ctx,px,base-ph*(hgt+8),1,2,k%2?"#FFFFFF":shade(color,0.6)) }
+  }
+  ctx.restore();
+}
+function drawPerson(p, sx, sy, o){
+  sx=Math.round(sx); sy=Math.round(sy);
+  ctx.save(); ctx.globalAlpha = o.alpha ?? 1;
+  ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(sx,sy,6,2.5,0,0,7); ctx.fill();
+  const lift = o.float ? Math.round(5+Math.sin(o.t*3)*1.5) : 0;
+  const by = sy - (o.seated?3:0) - lift;
+  const step = o.walking ? Math.sin(o.phase) : 0;
+  const bob = o.walking && Math.abs(step)>.7 ? -1 : 0;
+  const gi = o.color, pants = shade(o.color,-0.35);
+  if(o.seated) R(ctx,sx-4,by-3,8,3,pants);
+  else {
+    R(ctx,sx-3,by-5,2,step>0.3?4:5,pants); R(ctx,sx+1,by-5,2,step<-0.3?4:5,pants);
+    R(ctx,sx-3,by-1-(step>0.3?1:0),2,1,"#1A1020"); R(ctx,sx+1,by-1-(step<-0.3?1:0),2,1,"#1A1020");
+  }
+  if(o.chef) R(ctx,sx-5,by-12+bob,10,o.seated?9:11,shade(gi,-0.55));
+  R(ctx,sx-4,by-12+bob,8,8,gi); R(ctx,sx+2,by-12+bob,2,8,shade(gi,-0.22));
+  const belt = o.chef ? "#F2C14E" : "#15101C";
+  R(ctx,sx-4,by-6+bob,8,1,belt); R(ctx,sx+1,by-5+bob,1,2,belt);
+  if(!o.away){ R(ctx,sx-1,by-12+bob,2,1,"#FFF4E0"); R(ctx,sx,by-11+bob,1,2,"#FFF4E0") }
+  const tap = o.typing ? Math.floor(o.t*9)%2 : 0, armH = o.typing ? 4 : 6;
+  R(ctx,sx-6,by-11+bob+(o.typing?tap:0),2,armH,shade(gi,-0.08));
+  R(ctx,sx+4,by-11+bob+(o.typing?1-tap:0),2,armH,shade(gi,-0.3));
+  R(ctx,sx-6,by-11+bob+armH+(o.typing?tap:0),2,1,p.skin); R(ctx,sx+4,by-11+bob+armH+(o.typing?1-tap:0),2,1,p.skin);
+  R(ctx,sx-3,by-19+bob,6,7,p.skin);
+  if(o.away){ R(ctx,sx-3,by-20+bob,6,6,p.hair); R(ctx,sx-2,by-21+bob,1,1,p.hair); R(ctx,sx+1,by-21+bob,1,1,p.hair) }
+  else {
+    R(ctx,sx-3,by-20+bob,6,2,p.hair); R(ctx,sx-3,by-18+bob,1,2,p.hair); R(ctx,sx+2,by-18+bob,1,2,p.hair);
+    R(ctx,sx-2,by-21+bob,1,1,p.hair); R(ctx,sx+1,by-21+bob,1,1,p.hair);
+    const eye = o.glow ? "#FFFFFF" : "#1B1D2B"; R(ctx,sx-2,by-16+bob,1,1,eye); R(ctx,sx+1,by-16+bob,1,1,eye);
+  }
+  const band = o.chef ? "#F2C14E" : shade(o.color,-0.5);
+  R(ctx,sx-3,by-18+bob,6,1,band);
+  if(o.away){ R(ctx,sx+1,by-17+bob,1,3,band); R(ctx,sx+2,by-15+bob,1,2,band) }
+  ctx.restore();
+  return by-21+bob;
+}
+function drawBubble(sx, topY, kind, t){
+  sx=Math.round(sx); const y=Math.round(topY)-14;
+  R(ctx,sx-8,y,16,10,"#1C2140"); R(ctx,sx-7,y+1,14,8,"#FFFFFF"); R(ctx,sx-1,y+10,2,2,"#1C2140"); R(ctx,sx,y+9,1,2,"#FFFFFF");
+  if(kind==="dots"){ const n=Math.floor(t*3)%4; for(let i=0;i<3;i++) R(ctx,sx-4+i*3,y+4,2,2,i<n?"#6A25E0":"#D5CCE8") }
+  else { const c="#8A7FA8"; R(ctx,sx-4,y+2,4,1,c);R(ctx,sx-2,y+3,1,1,c);R(ctx,sx-3,y+4,1,1,c);R(ctx,sx-4,y+5,4,1,c); R(ctx,sx+1,y+4,3,1,c);R(ctx,sx+2,y+5,1,1,c);R(ctx,sx+1,y+6,3,1,c) }
+}
+function drawTag(sx, topY, text, strong){
+  ctx.font="8px 'Pixelify Sans', monospace"; ctx.textAlign="center";
+  const w=Math.ceil(ctx.measureText(text).width)+6, y=Math.round(topY)-(strong?26:16);
+  R(ctx,Math.round(sx-w/2),y,w,10,strong?"rgba(28,18,48,.92)":"rgba(28,18,48,.7)");
+  ctx.fillStyle=strong?"#FFE7A8":"#FFFFFF"; ctx.fillText(text,Math.round(sx),y+8);
+}
+function drawLantern(x,y){
+  isoBox(ctx,x-0.3,y-0.3,0,0.6,0.6,3,"#8C8C96","#6F6F7A","#5C5C66");
+  isoBox(ctx,x-0.12,y-0.12,3,0.24,0.24,8,"#9A9AA4","#7D7D88","#686873");
+  isoBox(ctx,x-0.28,y-0.28,11,0.56,0.56,6,"#8C8C96","#FFD27A","#F2B54A");
+  isoBox(ctx,x-0.36,y-0.36,17,0.72,0.72,2,"#7A7A85","#64646E","#55555E");
+}
+
+// ---------- Agents ----------
+const ag = new Map();      // clé -> marcheur
+const slotOf = {};         // session -> tapis
+let data = {sessions:[]}, overflow = 0, hovered = null, selected = null;
+const feed = [];
+
+function newWalker(o){
+  const h = hash(o.key);
+  return Object.assign({x:-0.8,y:DOOR_Y,path:[],phase:0,alpha:0,away:false,state:"entering",want:"idle",level:1,
+    skin:SKINS[h%SKINS.length], hair:HAIRS[(h>>3)%HAIRS.length]}, o);
+}
+function move(r, pts, after){
+  if(reduceMotion){ const l=pts[pts.length-1]; r.x=l[0]; r.y=l[1]; r.path=[]; after&&after(); return }
+  r.path = pts.slice(); r.after = after;
+}
+function enter(r){
+  r.x=-0.8; r.y=DOOR_Y; r.state="entering";
+  move(r, [[0.6,DOOR_Y],[r.seat.x,DOOR_Y],[r.seat.x,r.seat.y]], () => { r.state=r.want; renderAll() });
+}
+function leave(r){
+  r.state="leaving";
+  move(r, [[r.x,DOOR_Y],[0.6,DOOR_Y],[-0.9,DOOR_Y]], () => {
+    ag.delete(r.key);
+    if(![...ag.values()].some(o=>o.sid===r.sid)){ delete slotOf[r.sid]; relayout() }
+    if(selected===r.key){ selected=null; showList() }
+    renderAll();
+  });
+}
+function step(r, dt){
+  if(!r.path || !r.path.length) return;
+  const [tx,ty]=r.path[0], dx=tx-r.x, dy=ty-r.y, dist=Math.hypot(dx,dy), sp=2.8*dt;
+  r.away = (dx+dy) < -0.01;
+  if(dist<=sp){ r.x=tx; r.y=ty; r.path.shift(); if(!r.path.length){ const f=r.after; r.after=null; f&&f() } }
+  else { r.x+=dx/dist*sp; r.y+=dy/dist*sp }
+  r.phase += dt*14;
+}
+function relayout(){
+  const used = Object.values(slotOf);
+  const cols = Math.max(1, Math.min(MAXCOL, used.length ? Math.floor(Math.max(...used)/2)+1 : 1));
+  if(cols !== COLS) setRoom(cols);
+}
+
+function log(text, color){
+  feed.unshift({t:Date.now(), text, color});
+  if(feed.length>60) feed.pop();
+  const el = document.createElement("div"); el.textContent = text; el.style.setProperty("--c", color||"#B58CFF");
+  const box = $("toast"); box.prepend(el);
+  while(box.children.length>3) box.lastChild.remove();
+  setTimeout(() => el.remove(), 6000);
+}
+
+function sync(st){
+  const first = !data._loaded;
+  data = st; data._loaded = true;
+  const seen = new Set();
+  const live = (st.sessions||[]).filter(s=>s.status!=="ended");
+  const nSlots = MAXCOL*2;
+  live.forEach(s => {
+    if(slotOf[s.id]===undefined){ const u=new Set(Object.values(slotOf)); for(let i=0;i<nSlots;i++) if(!u.has(i)){ slotOf[s.id]=i; break } }
+  });
+  overflow = live.filter(s=>slotOf[s.id]===undefined).length;
+  relayout();
+  live.forEach(s => {
+    const si = slotOf[s.id]; if(si===undefined) return;
+    const color = clanColor(s.project), level = levelFromModel(s.model), want = s.status==="working"?"working":"idle";
+    const name = s.agentType || (s.role==="chef" ? "Chef" : "Agent");
+    seen.add(s.id);
+    let r = ag.get(s.id);
+    if(!r){
+      r = newWalker({key:s.id, sid:s.id, kind:s.role, seat:chefSeat(si), want, color, name});
+      ag.set(s.id, r); enter(r);
+      if(!first) log(`${name} arrive sur ${s.project}`, color);
+    } else {
+      if(r.want!==want && !first){ log(want==="working" ? `${r.name} se remet au travail sur ${s.project}` : `${r.name} attend ta réponse sur ${s.project}`, color) }
+      if(r.kind!=="chef" && s.role==="chef" && !first) log(`${r.name} devient chef sur ${s.project}`, color);
+    }
+    Object.assign(r, {kind:s.role, color, level, info:s, want, name});
+    if(r.state==="working"||r.state==="idle") r.state=want;
+    const subs = (s.subagents||[]).filter(x=>x.status==="working");
+    let placed = 0;
+    subs.forEach(x => {
+      const k = s.id+":"+x.id;
+      let d = ag.get(k);
+      if(!d){
+        const taken = new Set([...ag.values()].filter(o=>o.sid===s.id && o.kind==="disciple" && o.state!=="leaving").map(o=>o.idx));
+        const idx = [0,1,2,3,4,5,6,7].find(i=>!taken.has(i));
+        if(idx===undefined) return;
+        d = newWalker({key:k, sid:s.id, kind:"disciple", idx, seat:discipleSeat(si,idx), want:"working", color, name:x.type});
+        ag.set(k,d); enter(d);
+        if(!first) log(`${r.name} envoie ${x.type}${x.task?" : "+x.task:""}`, color);
+      }
+      if(d.state==="leaving") return;
+      seen.add(k); placed++;
+      Object.assign(d, {color, level, info:x, name:x.type, want:"working"});
+    });
+    r.extra = subs.length - placed;
+  });
+  ag.forEach(r => {
+    if(!seen.has(r.key) && r.state!=="leaving"){
+      if(!first){
+        if(r.kind==="disciple") log(`${r.name} a fini et quitte le dojo`, r.color);
+        else log(`La session ${r.info?.project||""} est terminée`, r.color);
+      }
+      leave(r);
+    }
+  });
+  renderAll();
+}
+
+// ---------- Boucle ----------
+let last = performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; const t=now/1000;
+  ag.forEach(r => { step(r,dt); r.alpha = r.x<0.2 ? Math.max(0,Math.min(1,r.x+0.8)) : 1 });
+  ctx.clearRect(0,0,SW,SH); ctx.drawImage(bg,0,0);
+  // Tapis
+  Object.entries(slotOf).forEach(([sid,si]) => {
+    const r = ag.get(sid); if(!r) return;
+    const [x0,y0]=slotOrigin(si), col=r.color;
+    quad(ctx,x0,y0,MAT,MAT,shade(col,-0.7));
+    quad(ctx,x0+0.15,y0+0.15,MAT-0.3,MAT-0.3,shade(col,-0.5));
+    quad(ctx,x0+0.5,y0+0.5,MAT-1,MAT-1,shade(col,-0.4));
+  });
+  const items = [];
+  [[0.8,0.8],[W-0.8,0.8],[0.8,H-0.8],[W-0.8,H-0.8]].forEach(([x,y]) => items.push({d:x+y, f:()=>drawLantern(x,y)}));
+  Object.entries(slotOf).forEach(([sid,si]) => {
+    const r = ag.get(sid); if(!r) return;
+    const c = chefSeat(si), gold = r.kind==="chef";
+    items.push({d:c.x+c.y-0.05, f:()=>isoBox(ctx,c.x-0.4,c.y-0.4,0,0.8,0.8,gold?6:2,gold?"#F2C14E":"#9C2A3A",gold?"#C9932E":"#7A1F2B",gold?"#A97A22":"#651824")});
+    if(gold) for(let k=0;k<8;k++){ const d=discipleSeat(si,k); items.push({d:d.x+d.y-0.05, f:()=>isoBox(ctx,d.x-0.22,d.y-0.22,0,0.44,0.44,2,"#4A3A66","#3A2C52","#2E2242")}) }
+    // Plaque du projet
+    const [x0,y0] = slotOrigin(si);
+    items.push({d:x0+MAT+y0+MAT, f:()=>{
+      let label = r.info?.project || "projet"; if(label.length>18) label=label.slice(0,17)+"…";
+      if(r.extra>0) label += `  +${r.extra}`;
+      const [lx,ly] = iso(x0+MAT/2, y0+MAT-0.2);
+      ctx.font="8px 'Pixelify Sans', monospace"; ctx.textAlign="center";
+      const w=Math.ceil(ctx.measureText(label).width)+10;
+      R(ctx,Math.round(lx-w/2),ly-4,w,12,"#3A1F14"); R(ctx,Math.round(lx-w/2)+1,ly-3,w-2,10,shade(r.color,-0.35));
+      ctx.fillStyle="#FFF4E0"; ctx.fillText(label,Math.round(lx),ly+5);
+    }});
+  });
+  ag.forEach(r => items.push({d:r.x+r.y, f:()=>{
+    const walking = r.path && r.path.length>0;
+    const seated = !walking && (r.state==="working"||r.state==="idle");
+    const [sx,sy0] = iso(r.x,r.y);
+    const sy = sy0 - (seated && r.kind==="chef" ? 5 : 0);
+    const away = walking ? r.away : r.kind==="disciple";
+    const working = r.state==="working" && !walking;
+    const lv = (working || (r.state==="entering" && r.level>0)) ? r.level : 0;
+    const off = working && lv===3 ? 5 : 0;
+    if(lv) drawAura(sx,sy-off,lv,r.color,t,true);
+    const top = drawPerson(r,sx,sy,{color:r.color,walking,phase:r.phase,seated,away,typing:working,t,alpha:r.alpha,float:working&&lv===3,glow:lv>=2,chef:r.kind==="chef"});
+    if(lv) drawAura(sx,sy-off,lv,r.color,t,false);
+    r._hit = {sx,sy,top};
+    if(!walking){ if(r.state==="working") drawBubble(sx,top,"dots",t); else if(r.state==="idle") drawBubble(sx,top,"wait",t) }
+    if(hovered===r.key || selected===r.key) drawTag(sx,top,r.name,true);
+    else if(r.kind!=="disciple" && !walking) drawTag(sx,top,r.name,true);
+  }}));
+  items.sort((a,b)=>a.d-b.d).forEach(i=>i.f());
+  requestAnimationFrame(frame);
+}
+
+// ---------- Clic ----------
+function pick(ev){
+  const rc = cv.getBoundingClientRect();
+  const x=(ev.clientX-rc.left)*SW/rc.width, y=(ev.clientY-rc.top)*SH/rc.height;
+  let best=null, bd=-1;
+  ag.forEach(r => { const h=r._hit; if(!h) return; if(x>=h.sx-8&&x<=h.sx+8&&y>=h.top-2&&y<=h.sy+2){ const d=r.x+r.y; if(d>bd){bd=d;best=r.key} } });
+  return best;
+}
+cv.addEventListener("mousemove", e => { hovered=pick(e); cv.style.cursor=hovered?"pointer":"default" });
+cv.addEventListener("mouseleave", () => hovered=null);
+cv.addEventListener("click", e => { const k=pick(e); if(k) openFiche(k) });
+
+// ---------- Panneau ----------
+let tab = "team";
+const drawer = $("drawer");
+function openDrawer(which){ tab=which; selected=null; drawer.classList.add("open"); renderDrawer() }
+$("openTeam").onclick = () => openDrawer("team");
+$("openFeed").onclick = () => openDrawer("feed");
+$("closeDrawer").onclick = () => { drawer.classList.remove("open"); selected=null };
+$("tab-team").onclick = () => { tab="team"; selected=null; renderDrawer() };
+$("tab-feed").onclick = () => { tab="feed"; selected=null; renderDrawer() };
+function showList(){ renderDrawer() }
+function openFiche(k){ selected=k; drawer.classList.add("open"); renderDrawer() }
+
+const ROLE = {chef:"Chef de projet", solo:"Agent solo", disciple:"Sous-agent"};
+const STATE = {entering:"Arrive au dojo", working:"Au travail", idle:"Attend ta réponse", leaving:"Quitte le dojo"};
+function since(ms){ const d=Math.max(0,Math.round(((data.now||Date.now())-ms)/60000)); return d<1?"à l’instant":d<60?`depuis ${d} min`:`depuis ${Math.floor(d/60)} h ${d%60} min` }
+function avatarURL(r){
+  const c=document.createElement("canvas"); c.width=24; c.height=24; const x=c.getContext("2d");
+  const f=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a,b,w,h)};
+  if(r.kind==="chef") f(5,15,14,9,shade(r.color,-0.55));
+  f(6,15,12,9,r.color); f(11,15,2,3,"#FFF4E0"); f(6,21,12,1,r.kind==="chef"?"#F2C14E":"#15101C");
+  f(10,6,6,8,r.skin); f(9,5,8,3,r.hair); f(9,7,1,3,r.hair); f(16,7,1,3,r.hair); f(10,4,1,1,r.hair); f(14,4,1,1,r.hair);
+  f(9,8,8,1,r.kind==="chef"?"#F2C14E":shade(r.color,-0.5)); f(11,10,1,1,"#1B1D2B"); f(14,10,1,1,"#1B1D2B");
+  return c.toDataURL();
+}
+function renderDrawer(){
+  $("tab-team").setAttribute("aria-selected", tab==="team" && !selected);
+  $("tab-feed").setAttribute("aria-selected", tab==="feed" && !selected);
+  const body = $("drawerBody");
+  if(selected){
+    const r = ag.get(selected);
+    if(!r){ selected=null; return renderDrawer() }
+    const s = (data.sessions||[]).find(x=>x.id===r.sid) || {};
+    const chef = ag.get(r.sid);
+    let more = "";
+    if(r.kind==="disciple"){
+      more = `<p class="muted">Envoyé par ${esc(chef?.name||"le chef")} sur ${esc(s.project)}</p>` +
+        (r.info?.task ? `<div class="box"><h3>Sa tâche</h3><p class="quote">${esc(r.info.task)}</p></div>` : "");
+    } else {
+      const subs = [...ag.values()].filter(o=>o.sid===r.sid && o.kind==="disciple");
+      more = `<p class="muted">${esc(s.cwd)}</p>` +
+        (s.prompt ? `<div class="box"><h3>Ta dernière demande</h3><p class="quote">${esc(s.prompt)}</p></div>` : "") +
+        (r.kind==="chef" ? `<div class="box"><h3>Ses sous-agents</h3>${subs.length ? "<ul>"+subs.map(o=>`<li>${esc(o.name)}${o.info?.task?" : "+esc(o.info.task):""}</li>`).join("")+"</ul>" : `<p class="muted">Aucun sous-agent au travail en ce moment.</p>`}</div>` : "");
+    }
+    const started = r.kind==="disciple" ? r.info?.startedAt : s.startedAt;
+    body.innerHTML = `<button class="btn back" id="back">Retour</button>
+      <div class="who"><img class="avatar" alt="" src="${avatarURL(r)}"><div><h2>${esc(r.name)}</h2><p>${ROLE[r.kind]||"Agent"} sur ${esc(s.project||"")}</p><p>${STATE[r.state]||""}${started?", "+since(started):""}</p></div></div>
+      <div class="chips"><span>Puissance ${esc(LEVELS[r.level].name)}</span>${s.model?`<span>${esc(s.model)}</span>`:""}</div>${more}`;
+    $("back").onclick = () => { selected=null; renderDrawer() };
+    return;
+  }
+  if(tab==="feed"){
+    body.innerHTML = feed.length ? `<ul class="list feed">${feed.map(e=>`<li><span class="dot" style="background:${e.color||"#B58CFF"}"></span><span style="flex:1">${esc(e.text)}</span><time>${new Date(e.t).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}</time></li>`).join("")}</ul>`
+      : `<p class="empty">Rien pour l’instant. Les arrivées, les sous-agents envoyés et les fins de session s’afficheront ici.</p>`;
+    return;
+  }
+  const groups = {};
+  ag.forEach(r => (groups[r.sid] = groups[r.sid] || []).push(r));
+  const keys = Object.keys(groups);
+  body.innerHTML = keys.length ? keys.map(sid => {
+    const g = groups[sid].sort((a,b)=>(a.kind==="disciple")-(b.kind==="disciple"));
+    const head = g.find(r=>r.kind!=="disciple") || g[0];
+    return `<div class="proj">${esc(head.info?.project || "projet")}</div><ul class="list">` + g.map(r =>
+      `<li class="${r.kind==="disciple"?"sub":""}"><button data-k="${esc(r.key)}"><span class="dot" style="background:${r.color}"></span><span class="li-main"><span class="li-title">${esc(r.name)}</span><span class="li-sub">${ROLE[r.kind]}, ${esc(LEVELS[r.level].name)}</span></span><span class="status ${r.state==="working"?"working":r.state==="idle"?"idle":""}">${STATE[r.state]||""}</span></button></li>`
+    ).join("") + "</ul>";
+  }).join("") + (overflow ? `<p class="muted" style="margin-top:10px">${overflow} session${overflow>1?"s":""} de plus ne tiennent pas dans le dojo (8 tapis maximum).</p>` : "")
+  : `<p class="empty">Aucun agent au dojo. Lance <code>claude</code> dans un de tes projets.</p>`;
+  body.querySelectorAll("button[data-k]").forEach(b => b.onclick = () => openFiche(b.dataset.k));
+}
+
+function renderAll(){
+  const n = ag.size, w = [...ag.values()].filter(r=>r.state==="working").length;
+  const proj = Object.keys(slotOf).length;
+  if(status==="ok") $("pulse").innerHTML = n ? `<b>${n}</b> agent${n>1?"s":""} sur <b>${proj}</b> projet${proj>1?"s":""}, <b>${w}</b> au travail` : "Le dojo est vide. Lance claude dans un projet.";
+  if(drawer.classList.contains("open")) renderDrawer();
+}
+
+// ---------- Serveur local ----------
+let timer=null, status="init", fails=0;
+function showBanner(){
+  const b = $("banner");
+  if(status!=="down"){ b.hidden = true; return }
+  b.innerHTML = `<h2>Le serveur du dojo ne répond pas</h2><p>Vérifie qu’il tourne avec <code>curl http://localhost:4747/state</code>. Pour le relancer : <code>launchctl kickstart -k gui/$(id -u)/com.claude-dojo.web</code></p><p><button class="btn primary" id="retry">Réessayer</button></p>`;
+  b.hidden = false; $("pulse").textContent = "Serveur injoignable";
+  $("retry").onclick = () => { fails=0; poll() };
+}
+async function poll(){
+  clearTimeout(timer);
+  if(document.hidden) return;
+  try{
+    const res = await fetch("/state", {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const st = await res.json();
+    fails = 0; status = "ok"; showBanner(); sync(st);
+    timer = setTimeout(poll, 2000);
+  }catch(e){
+    fails++;
+    if(fails>=3){ status="down"; showBanner() }
+    timer = setTimeout(poll, fails>=3 ? 10000 : 2000);
+  }
+}
+document.addEventListener("visibilitychange", () => { if(!document.hidden) poll() });
+
+// ---------- Démarrage ----------
+setRoom(1);
+requestAnimationFrame(frame);
+if(document.fonts) document.fonts.load("8px 'Pixelify Sans'").then(()=>drawBackground()).catch(()=>{});
+poll();
+})();
+</script>
+</body>
+</html>
